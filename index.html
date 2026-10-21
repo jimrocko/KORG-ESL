@@ -299,10 +299,10 @@ body.red .tp i{background:radial-gradient(circle,rgba(255,255,255,.95),rgba(255,
       <h2>Samples</h2>
       <button class="sbtn pri" id="shClose">Fertig</button>
     </header>
-    <p>Importiere WAV, AIFF, MP3 oder M4A aus der Dateien-App, nimm dein Pattern per Resample auf oder zerlege einen Loop in Slices. Im roten Sampler-Modus wählt der Oscillator-Regler zwischen diesen Samples.</p>
+    <p>Importiere WAV, AIFF, MP3, M4A oder eine komplette <b>e2sSample.all</b> von der SD-Karte deiner electribe sampler aus der Dateien-App, nimm dein Pattern per Resample auf oder zerlege einen Loop in Slices. Im roten Sampler-Modus wählt der Oscillator-Regler zwischen diesen Samples.</p>
     <div class="acts">
       <label class="sbtn pri" for="file">＋ Datei importieren</label>
-      <input type="file" id="file" accept="audio/*,.wav,.aif,.aiff,.mp3,.m4a" multiple hidden>
+      <input type="file" id="file" multiple hidden>
       <button class="sbtn" id="shRes">● Resample (1 Loop)</button>
       <span class="hint" id="shMsg"></span>
     </div>
@@ -922,11 +922,47 @@ $$('[data-slice]').forEach(b=>b.onclick=()=>{const s=selS;if(!s)return;const n=+
   applyAll();dirty();padMode=prevMode='trig';renderList();shMsg.textContent=`${n} Slices erstellt und auf Part 1–${n} gelegt.`});
 $('#shDel').onclick=()=>{const s=selS;if(!s||s.factory)return;const i=SMP.indexOf(s);SMP.splice(i,1);DB.del('smp',s.id);
   if(!SMP.some(x=>x.src===s.src)&&!s.src.startsWith('fsrc:')){SRC.delete(s.src);DB.del('src',s.src)}selS=SMP[Math.max(0,i-1)]||null;renderList();renderEd();shMsg.textContent='Gelöscht.'};
+/* WAV parser (handles the korg/esli chunk of electribe sampler files) */
+const str4=(v,p)=>String.fromCharCode(v.getUint8(p),v.getUint8(p+1),v.getUint8(p+2),v.getUint8(p+3));
+function readName(v,p,len){let t='';for(let i=0;i<len&&p+i<v.byteLength;i++){const c=v.getUint8(p+i);if(!c)break;if(c<32||c>126)return'';t+=String.fromCharCode(c)}return t.trim()}
+function parseWav(ab){
+  const v=new DataView(ab);if(v.byteLength<44||str4(v,0)!=='RIFF'||str4(v,8)!=='WAVE')return null;
+  let p=12,fmt=null,data=null,name='';
+  while(p+8<=v.byteLength){const id=str4(v,p),sz=v.getUint32(p+4,true),d=p+8;
+    if(id==='fmt ')fmt={f:v.getUint16(d,true),ch:v.getUint16(d+2,true),sr:v.getUint32(d+4,true),bits:v.getUint16(d+14,true)};
+    else if(id==='data')data=[d,Math.min(sz,v.byteLength-d)];
+    else if(id==='korg'){let q=d;while(q+8<=Math.min(d+sz,v.byteLength)){const sid=str4(v,q),ssz=v.getUint32(q+4,true);if(sid==='esli')name=readName(v,q+10,16);q+=8+ssz+(ssz&1)}}
+    p=d+sz+(sz&1)}
+  if(!fmt||!data||(fmt.f!==1&&fmt.f!==0xFFFE)||![8,16,24,32].includes(fmt.bits)||fmt.ch<1||fmt.ch>2)return null;
+  const bps=fmt.bits/8,fr=Math.floor(data[1]/(bps*fmt.ch));if(!fr)return null;
+  const buf=new AudioBuffer({length:fr,numberOfChannels:fmt.ch,sampleRate:clamp(fmt.sr,3000,384000)});
+  for(let c=0;c<fmt.ch;c++){const out=new Float32Array(fr);let o=data[0]+c*bps;const st=bps*fmt.ch;
+    for(let k=0;k<fr;k++,o+=st){out[k]=fmt.bits===16?v.getInt16(o,true)/32768:fmt.bits===8?(v.getUint8(o)-128)/128:fmt.bits===24?((v.getUint8(o)|v.getUint8(o+1)<<8|v.getInt8(o+2)<<16)/8388608):v.getInt32(o,true)/2147483648}
+    buf.copyToChannel(out,c)}
+  return{buf,name};
+}
+function cap60(buf){const max=Math.min(buf.length,buf.sampleRate*60);if(max===buf.length)return buf;const o=new AudioBuffer({length:max,numberOfChannels:buf.numberOfChannels,sampleRate:buf.sampleRate});for(let c=0;c<buf.numberOfChannels;c++)o.copyToChannel(buf.getChannelData(c).subarray(0,max),c);return o}
+/* e2sSample.all: 16-byte header "e2s sample all", then up to 1000 little-endian offsets to RIFF/WAVE files */
+async function importE2S(f){
+  const head=new DataView(await f.slice(0,16+4000).arrayBuffer()),offs=[];
+  for(let i=0;i<1000&&16+i*4+4<=head.byteLength;i++){const o=head.getUint32(16+i*4,true);if(o>=16&&o+44<=f.size)offs.push([i,o])}
+  if(!offs.length){shMsg.textContent=`${f.name} enthält keine Samples (leere Datei).`;return 0}
+  let n=0;
+  for(const[i,o]of offs){
+    try{const h=new DataView(await f.slice(o,o+8).arrayBuffer());if(str4(h,0)!=='RIFF')continue;
+      const w=parseWav(await f.slice(o,o+h.getUint32(4,true)+8).arrayBuffer());if(!w)continue;
+      selS=addSource(cap60(w.buf),w.name||'e2s '+pad3(i+1));n++;
+      if(n%10===0){shMsg.textContent=`e2s-Import: ${n} von ${offs.length} …`;renderList()}}catch(_){}
+  }
+  shMsg.textContent=`${n} Samples aus ${f.name} importiert.`;return n;
+}
 $('#file').onchange=async e=>{const files=[...e.target.files];e.target.value='';
-  for(const f of files){shMsg.textContent='Lade '+f.name+' …';try{let buf=await decode(await f.arrayBuffer());
-      const max=Math.min(buf.length,buf.sampleRate*60);if(max<buf.length){const o=new AudioBuffer({length:max,numberOfChannels:buf.numberOfChannels,sampleRate:buf.sampleRate});for(let c=0;c<buf.numberOfChannels;c++)o.copyToChannel(buf.getChannelData(c).subarray(0,max),c);buf=o}
-      selS=addSource(buf,f.name.replace(/\.[^.]+$/,''));shMsg.textContent=`„${selS.name}“ importiert.`}
-    catch(err){shMsg.textContent=f.name+' ließ sich nicht lesen. Versuche WAV oder MP3.'}}
+  for(const f of files){shMsg.textContent='Lade '+f.name+' …';
+    try{const magic=new TextDecoder().decode(await f.slice(0,14).arrayBuffer());
+      if(magic==='e2s sample all'){await importE2S(f);continue}
+      const ab=await f.arrayBuffer();const w=parseWav(ab);const buf=w?w.buf:await decode(ab);
+      selS=addSource(cap60(buf),(w&&w.name)||f.name.replace(/\.[^.]+$/,''));shMsg.textContent=`„${selS.name}“ importiert.`}
+    catch(err){shMsg.textContent=f.name+' ließ sich nicht lesen. Versuche WAV, MP3 oder e2sSample.all.'}}
   renderList();renderEd()};
 let resampling=false;
 $('#shRes').onclick=()=>{if(resampling)return;ensureAudio();if(!ctx)return;stopT();resampling=true;
