@@ -1,5 +1,4 @@
 <title>ESL Groovebox</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Barlow:ital,wght@0,500;0,700;1,700&family=VT323&display=swap">
@@ -23,12 +22,16 @@ body.red{--panel:#bf2a31;--panel-hi:#da444b;--panel-lo:#951f26;--edge:#6a1519;--
 html{background:var(--room)}
 [hidden]{display:none!important}
 body{background:radial-gradient(120% 80% at 50% 0%,var(--room-2),var(--room));color:var(--print);font-family:var(--f-brand);
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px;
+  margin:0;overflow:hidden;overscroll-behavior:none;
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;min-height:100%}
 button{font:inherit;color:inherit;touch-action:manipulation}
 button:focus-visible,.knob:focus-visible{outline:2px solid #fff;outline-offset:2px}
 
-.dev{max-width:1240px;margin:0 auto;background:linear-gradient(172deg,var(--panel-hi),var(--panel) 32%,var(--panel-lo));
+/* fixed-size device, scaled by JS to fit the screen (like a photo of the real unit) */
+#fit{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;
+  padding:calc(env(safe-area-inset-top,0px) + 6px) calc(env(safe-area-inset-right,0px) + 6px) calc(env(safe-area-inset-bottom,0px) + 6px) calc(env(safe-area-inset-left,0px) + 6px);box-sizing:border-box}
+#stage{position:relative;flex:none}
+.dev{width:1240px;box-sizing:border-box;margin:0;position:absolute;left:0;top:0;transform-origin:0 0;background:linear-gradient(172deg,var(--panel-hi),var(--panel) 32%,var(--panel-lo));
   border-radius:28px;padding:20px 22px 22px;display:grid;gap:16px;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -3px 0 rgba(0,0,0,.25),0 0 0 1px var(--edge),0 30px 70px rgba(0,0,0,.55)}
 
@@ -81,7 +84,7 @@ body:not(.red) .mode span:first-child,body.red .mode span:last-child{background:
 .krow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .brow{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
 .brow .key{font-size:11.5px;min-width:44px}
-.knob{display:grid;justify-items:center;gap:4px;touch-action:none;cursor:ns-resize}
+.knob{display:grid;justify-items:center;gap:4px;touch-action:none;cursor:ns-resize;padding:4px;margin:-4px}
 .knob .cap{--rot:0deg;width:42px;aspect-ratio:1;border-radius:50%;position:relative;transform:rotate(var(--rot));
   background:radial-gradient(circle at 36% 28%,#f6f7f9,#c6c9cf 45%,#8a8e96 100%);
   box-shadow:0 5px 10px rgba(0,0,0,.4),0 0 0 3px rgba(0,0,0,.18),inset 0 -2px 3px rgba(0,0,0,.25)}
@@ -109,7 +112,7 @@ body:not(.red) .mode span:first-child,body.red .mode span:last-child{background:
   background:radial-gradient(circle,rgba(255,90,70,.95),rgba(255,60,40,.15) 65%,transparent 70%)}
 body.red .tp i{background:radial-gradient(circle,rgba(255,255,255,.95),rgba(255,255,255,.12) 65%,transparent 70%)}
 .pads{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:10px}
-.pad{position:relative;aspect-ratio:1;border-radius:9px;border:0;cursor:pointer;touch-action:none;
+.pad{position:relative;aspect-ratio:1.12;border-radius:9px;border:0;cursor:pointer;touch-action:none;
   background:radial-gradient(110% 100% at 50% 20%,var(--pad-hi),var(--pad));box-shadow:0 4px 0 rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.07)}
 .pad[data-press]{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.45),inset 0 0 18px rgba(255,255,255,.08)}
 .pad .led{position:absolute;left:50%;top:44%;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;border-radius:50%;background:rgba(255,60,40,.22);transition:background .05s}
@@ -151,27 +154,18 @@ body.red .tp i{background:radial-gradient(circle,rgba(255,255,255,.95),rgba(255,
 .hint{font-size:12px;color:var(--sheet-dim)}
 .ren-in{width:min(420px,100%)}
 
-@media (max-width:1060px){
-  .top{grid-template-columns:minmax(0,1fr) 118px}
-  .colR{grid-column:1/-1}
-  .sections{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));row-gap:16px}
-}
-@media (max-width:640px){
-  .dev{padding:16px 14px;border-radius:22px}
-  .top{grid-template-columns:minmax(0,1fr)}
-  .colM{grid-template-columns:auto 1fr;align-items:center;gap:14px}
-  .jog{width:72px;margin:0}
-  .nav{grid-template-columns:repeat(3,1fr)}
-  .bottom{grid-template-columns:minmax(0,1fr)}
-  .tp{min-height:120px;order:2}
-  .pads{grid-template-columns:repeat(4,minmax(0,1fr))}
-  .bars{margin-left:0}
-  .sgrid{grid-template-columns:minmax(0,1fr)}
-  .slist{max-height:200px}
-}
+.rotate{position:fixed;inset:0;z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;
+  background:var(--room);color:var(--print);padding:24px;font-family:var(--f-print)}
+.rotate .ph{width:64px;height:110px;border:4px solid var(--print);border-radius:14px;animation:turn 2.4s ease-in-out infinite}
+.rotate b{font-size:26px;font-weight:600}
+.rotate p{margin:0;font-family:var(--f-brand);font-size:15px;color:var(--print-dim);max-width:30ch;line-height:1.4}
+@keyframes turn{0%,30%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
+@media (orientation:portrait) and (max-width:760px){body:not(.anyway) .rotate{display:flex}}
+@media (max-height:520px){.sheet-in{padding:12px;gap:8px}.sheet p{display:none}.slist{max-height:none}.ed canvas{height:80px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
+<div id="fit"><div id="stage">
 <main class="dev" id="dev">
   <section class="top">
     <div class="colL">
@@ -290,6 +284,14 @@ body.red .tp i{background:radial-gradient(circle,rgba(255,255,255,.95),rgba(255,
     <div class="pads" id="pads"></div>
   </section>
 </main>
+</div></div>
+
+<div class="rotate" id="rotate">
+  <div class="ph"></div>
+  <b>Bitte ins Querformat drehen</b>
+  <p>Die Groovebox ist für das iPhone im Querformat gebaut und passt dann komplett auf den Bildschirm.</p>
+  <button class="sbtn" id="anyway">Trotzdem hochkant anzeigen</button>
+</div>
 
 <div class="sheet" id="sheet" hidden>
   <div class="sheet-in">
@@ -560,9 +562,9 @@ function ensureAudio(){
     const sb=ctx.createBuffer(1,1,ctx.sampleRate),s=ctx.createBufferSource();s.buffer=sb;s.connect(ctx.destination);s.start();
     setInterval(tick,25);
   }
-  if(ctx.state!=='running')ctx.resume();
+  if(ctx.state!=='running'){try{ctx.resume()}catch(_){}}
 }
-['pointerdown','touchend','keydown'].forEach(ev=>document.addEventListener(ev,ensureAudio,{capture:true}));
+['pointerdown','touchend','click','keydown'].forEach(ev=>document.addEventListener(ev,ensureAudio,{capture:true}));
 function applyChain(i){
   if(!ctx)return;const c=RT[i].c,p=P.parts[i],t=ctx.currentTime;
   c.pan.pan.setTargetAtTime(p.pan/63,t,.01);c.lvl.gain.setTargetAtTime(Math.pow(p.level/127,2)*1.1,t,.01);c.mute.gain.setTargetAtTime(muted[i]?0:1,t,.005);
@@ -653,7 +655,9 @@ function padDown(i){
     case 'chord':{const c=chordOf(i);lastNote[cur]=c.notes[0];recordNow(cur,c.notes,100);say('Chord',c.name,700);return trigger(cur,c.notes,100,now,Infinity)}
     case 'jump':{const s=viewBar*16+i;if(s>=P.bars*16)return;step=s;if(playing&&ctx){uiQ=[];nextT=ctx.currentTime+.02}say('Step Jump',pad2(s+1),700);return}
     case 'pset':selectPattern(i);return;
-    case 'mute':muted[i]=!muted[i];applyChain(i);return;
+    case 'mute':
+      if(shift){const solo=!muted[i]&&muted.every((m,j)=>j===i||m);for(let j=0;j<16;j++)muted[j]=solo?false:j!==i;applyAll();say('Solo',solo?'aus':'Part '+pad2(i+1))}
+      else{muted[i]=!muted[i];applyChain(i)}return;
     case 'erase':{const p=P.parts[i];p.steps.fill(null);p.motion={};dirty();say('Part '+pad2(i+1),'gelöscht');return}
   }
 }
@@ -788,8 +792,10 @@ function btn(b){
   }
 }
 function doWrite(){const w=write;PAT[w]=norm(JSON.parse(JSON.stringify(P)));write=null;LS.set('esl.v1.pats',PAT);loadPattern(w);say('Gespeichert','→ '+pad3(w+1))}
-document.addEventListener('pointerdown',e=>{const b=e.target.closest('[data-b]');if(!b)return;e.preventDefault();btn(b.dataset.b)});
-document.addEventListener('click',e=>{const b=e.target.closest('[data-b]');if(b&&e.detail===0)btn(b.dataset.b)});
+let lastPtr=-1e9;
+document.addEventListener('pointerdown',e=>{const b=e.target.closest('[data-b]');if(!b)return;e.preventDefault();lastPtr=performance.now();btn(b.dataset.b)});
+// keyboard (Enter/Space) only: touch and mouse already fired on pointerdown
+document.addEventListener('click',e=>{const b=e.target.closest('[data-b]');if(b&&performance.now()-lastPtr>1000)btn(b.dataset.b)});
 
 /* ---------- render ---------- */
 const lcdEl={a:$('#l1a'),b:$('#l1b'),c:$('#l2'),d:$('#l3'),e:$('#l4')},cache=new Map();
@@ -806,7 +812,7 @@ function litOf(b){const p=part();switch(b){
 }return''}
 function render(){
   const now=performance.now();
-  if(ctx){while(uiQ.length&&uiQ[0].t<=ctx.currentTime){const q=uiQ.shift();playStep=q.s;playStepT=q.t}}
+  if(ctx){while(uiQ.length&&uiQ[0].t<=ctx.currentTime){const q=uiQ.shift();playStep=q.s;playStepT=q.t;P.parts.forEach((p,i)=>{if(p.steps[q.s]&&!muted[i])flashUntil[i]=now+110})}}
   // LCD
   const pos=playing&&playStep>=0?`${(playStep/16|0)+1}.${((playStep%16)/4|0)+1}.${playStep%4+1}`:'';
   let c=pad3(slot+1)+(pending!=null?'  → '+pad3(pending+1):''),d=P.name,e;
@@ -822,15 +828,17 @@ function render(){
   const p=part(),len=P.bars*16;
   padEls.forEach((el,i)=>{let led='',lbl='';
     switch(padMode){
-      case 'trig':{const q=P.parts[i];lbl=oscOf(q.osc).n;const hit=(playing&&playStep>=0&&q.steps[playStep]&&!muted[i])||flashUntil[i]>now;led=i===cur?(hit?'selon':'sel'):(hit?'on':'');if(muted[i])led+=' muted';break}
+      case 'trig':{const q=P.parts[i];lbl=oscOf(q.osc).n;led=muted[i]?'':flashUntil[i]>now?'on':q.steps.some(Boolean)?'dim':'';break}
       case 'seq':{const s=viewBar*16+i;lbl=String(s+1);if(s>=len){led='off';break}led=p.steps[s]?'on':'';if(playing&&playStep===s)led=p.steps[s]?'hot':'head';break}
       case 'kbd':{const n=kbdNote(i);if(n==null){led='off';break}lbl=nName(n);led=el.hasAttribute('data-press')?'on':(i>=8?'dim':'');break}
       case 'chord':lbl=chordOf(i).name;led=el.hasAttribute('data-press')?'on':'dim';break;
       case 'jump':{const s=viewBar*16+i;lbl=String(s+1);led=s>=len?'off':(playing&&playStep===s?'on':'dim');break}
       case 'pset':lbl='P'+pad3(i+1)+(PAT[i]?' '+PAT[i].name:'');led=pending===i?'on':slot===i?'sel':PAT[i]?'dim':'off';break;
-      case 'mute':lbl='Part '+(i+1);led=muted[i]?'off':'on';break;
-      case 'erase':lbl='Part '+(i+1);led=P.parts[i].steps.some(Boolean)?'on':'off';break;
+      case 'mute':lbl=(muted[i]?'Mute · ':'')+oscOf(P.parts[i].osc).n;led=muted[i]?'':'on';break;
+      case 'erase':lbl=oscOf(P.parts[i].osc).n;led=P.parts[i].steps.some(Boolean)?'on':'';break;
     }
+    if((padMode==='trig'||padMode==='mute'||padMode==='erase')&&i===cur)led=led==='on'?'selon':'sel';
+    if(muted[i]&&padMode!=='seq'&&padMode!=='kbd'&&padMode!=='chord')led+=' muted';
     setCls(el,'pad '+led);setTxt(padLbl[i],lbl);
   });
   // knobs
@@ -939,8 +947,18 @@ $('#renOk').onclick=()=>{const v=$('#renIn').value.trim().slice(0,16);if(v){P.na
 $('#renNo').onclick=()=>{$('#ren').hidden=true};
 $('#renIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('#renOk').click()});
 
+/* ---------- fit to screen ---------- */
+const fitEl=$('#fit'),stage=$('#stage'),dev=$('#dev');
+function fit(){const cs=getComputedStyle(fitEl),aw=fitEl.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight),ah=fitEl.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
+  const w=dev.offsetWidth,h=dev.offsetHeight;if(!w||!h||aw<=0||ah<=0)return;const sc=Math.min(aw/w,ah/h,1.5);
+  dev.style.transform=`scale(${sc})`;stage.style.width=w*sc+'px';stage.style.height=h*sc+'px'}
+addEventListener('resize',fit);addEventListener('orientationchange',()=>setTimeout(fit,250));
+if(window.visualViewport)visualViewport.addEventListener('resize',fit);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fit);
+$('#anyway').onclick=()=>{document.body.classList.add('anyway');fit()};
+
 /* ---------- boot ---------- */
-applyMode();
+applyMode();fit();
 requestAnimationFrame(render);
 renderFactory().then(loadUser).then(()=>{if(!$('#sheet').hidden){renderList();renderEd()}});
 })();
